@@ -11,6 +11,12 @@ It is a simple implementation of diffusion model in  Pytorch. Depending on the i
 
 Run the main.py to train the UNet and visualize the results. The use of a GPU is strongly recommended.
 
+## Next steps
+The next steps are the implementations of:
+- Inception score (IS)
+- multiple GPU.
+
+
 ## Acknowlegements
 This repository is based on [https://github.com/lucidrains/denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch).
 
