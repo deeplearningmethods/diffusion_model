@@ -2,7 +2,7 @@
 This repository contains code and resources related to the paper titled "..." by ... .
 It is a simple implementation of diffusion model in  Pytorch. Depending on the input parameters <a href="https://arxiv.org/abs/2006.11239">Denoising Diffusion Probabilistic Model (DDPM)</a>, <a href="https://arxiv.org/abs/2102.09672">Improved DDPM</a>, <a href="https://arxiv.org/abs/2010.02502">Denoising Diffusion Implicit Model (DDIM)</a>, and <a href="https://arxiv.org/abs/2207.12598">classifier-free diffusion guidance</a> may be run.
 
-<img src="./images/forward_diffusion.png" width="500px"><img>
+<img src="./images/forward_diffusion.png" width="1000px"><img>
 
 ## Repository Structure
 
