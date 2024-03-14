@@ -4,7 +4,7 @@ It is a simple implementation of diffusion model in  Pytorch. Depending on the i
 
 ## Repository Structure
 
-- `code/`: Contains the implementation of the diffusion models discussed in the paper.
+- `code/`: Contains the implementation of the diffusion models discussed in the paper. Use the file 'main.py' to train the Unet and generate new samples.
 - `results/`: Results obtained from experiments conducted in the paper.
 
 ## How to Use
