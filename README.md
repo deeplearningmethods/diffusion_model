@@ -20,7 +20,7 @@ The next steps are the implementations of:
 
 
 ## Acknowlegements
-This repository is based on [https://github.com/lucidrains/denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch).
+This scheme was first proposed in [https://github.com/lucidrains/denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch).
 
 ## License
 
