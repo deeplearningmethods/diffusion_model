@@ -6,8 +6,9 @@ It is a simple implementation of diffusion model in  Pytorch. Depending on the i
 
 ## Repository Structure
 
-- `code/`: Contains the implementation of the diffusion models discussed in the paper. Use the file 'main.py' to train the Unet and generate new samples.
+- `code/`: It contains the implementation of the diffusion models discussed in the paper. Use the file 'main.py' to train the Unet and generate new samples.
 - `results/`: Results obtained from experiments conducted in the paper.
+- 'images/': It contains the images empoyed in the paper and the code needed to generate them.
 
 ## How to Use
 
@@ -22,6 +23,6 @@ The next steps are the implementations of:
 ## Acknowlegements
 This scheme was first proposed in [https://github.com/lucidrains/denoising-diffusion-pytorch](https://github.com/lucidrains/denoising-diffusion-pytorch).
 
-## License
+<!--## License
 
-This project is licensed under the ... .
+This project is licensed under the ... . -->
