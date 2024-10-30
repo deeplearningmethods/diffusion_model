@@ -8,7 +8,7 @@ It is a simple implementation of diffusion model in  Pytorch. Depending on the i
 
 - `code/`: It contains the implementation of the diffusion models discussed in the paper. Use the file 'main.py' to train the Unet and generate new samples.
 - `results/`: Results obtained from experiments conducted in the paper.
-- 'images/': It contains the images empoyed in the paper and the code needed to generate them.
+- `images/`: It contains the images empoyed in the paper and the code needed to generate them.
 
 ## How to Use
 
