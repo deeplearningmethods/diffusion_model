@@ -33,13 +33,16 @@ class Dataset():
             transforms.Lambda(lambda t: (t * 2) - 1)                                                                                # Scale between [-1, 1] instead of [0,1], better for the algorithm
         ])
         
-        assert self.dataset_name in {'FGVCAIRCRAFT','Flowers102','StanfordCars','MNIST', 'CIFAR10'}, 'dataset name should be in (FGVCAIRCRAFT,Flowers102,StanfordCars,CIFAR10)'
+        assert self.dataset_name in {'FGVCAIRCRAFT','Flowers102','StanfordCars','MNIST', 'CIFAR10','FashionMNIST'}, 'dataset name should be in (FGVCAIRCRAFT,Flowers102,StanfordCars,CIFAR10,FashionMNIST)'
         if self.dataset_name == 'FGVCAIRCRAFT':
             self.train = torchvision.datasets.FGVCAircraft(root=".", download=True, transform=self.transform)
             self.test = torchvision.datasets.FGVCAircraft(root=".", download=True, transform=self.transform, split='test')
         if self.dataset_name == 'MNIST':
             self.train = torchvision.datasets.MNIST(root=".", download=True, transform=self.transform)
             self.test = torchvision.datasets.MNIST(root=".", download=True, transform=self.transform, train=False)
+        if self.dataset_name == 'FashionMNIST':
+            self.train = torchvision.datasets.FashionMNIST(root=".", download=True, transform=self.transform)
+            self.test = torchvision.datasets.FashionMNIST(root=".", download=True, transform=self.transform, train=False)
         if self.dataset_name == 'Flowers102':
             self.train = torchvision.datasets.Flowers102(root=".", download=True, transform=self.transform)
             self.test = torchvision.datasets.Flowers102(root=".", download=True, transform=self.transform, split='test')
@@ -60,7 +63,7 @@ class Dataset():
             
     
     
-    def show_images(self, num_samples=20, cols=4):
+    def show_images(self, num_samples=36, cols=6):
         """ Plots some samples from the dataset """
         plt.figure(figsize=(15,12))
         
@@ -75,7 +78,7 @@ class Dataset():
         for i, img in enumerate(self.train):
             if i == num_samples:
                 break
-            plt.subplot(int(num_samples/cols) + 1, cols, i + 1)  # create grid
+            plt.subplot(int(num_samples/cols) , cols, i + 1)  # create grid
             # correct input dimension. img is a tuple, in position 0 there is the image, in position 1 the label.
             if len(img[0].size())==4:
                 print('there is dim 4')
@@ -88,7 +91,7 @@ class Dataset():
                     plt.imshow(reverse_transforms(img[0]))
             else:
                 raise ValueError(f'Dimension of the image is not correct: {img.size()}') 
-            
+            plt.axis('off')  # Turn off axis
             
             
     def get_data(self,):

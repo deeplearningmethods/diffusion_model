@@ -85,7 +85,7 @@ class GaussianDiffusion(nn.Module):
         ddim_sampling_eta = 1.,
         w = 0,                       # constant needed for classifier free guidance
         p_uncond = 0,
-        offset_noise_strength = 0.,  # https://www.crosslabs.org/blog/diffusion-with-offset-noise
+        offset_noise_strength = 0.1,  # https://www.crosslabs.org/blog/diffusion-with-offset-noise
         min_snr_loss_weight = False, # signal noise ratio https://arxiv.org/abs/2303.09556
         min_snr_gamma = 5
         ):
@@ -285,6 +285,8 @@ class GaussianDiffusion(nn.Module):
         else:
             style = None
         fig, axs = plt.subplots(1, num_images+1, figsize=(30,4))
+        plt.subplots_adjust(wspace=0)  # Set spacing between subplots to zero
+        plt.axis('off')
         fig.suptitle('Forward process')
         if hist:
             fig_hist, axs_hist = plt.subplots(1, num_images+1, figsize=(30,4))
@@ -299,6 +301,7 @@ class GaussianDiffusion(nn.Module):
             
         axs[0].imshow(reverse_transforms_image(real_image).squeeze(), cmap = style )
         axs[0].set_title('Starting image')
+        axs[0].axis('off')
         
         for idx in range(stepsize, T+stepsize, stepsize):
             t = torch.Tensor([idx-1]).type(torch.int64) # in the code step 1 happens when t=0
@@ -306,6 +309,7 @@ class GaussianDiffusion(nn.Module):
             img = self.forward_diffusion_sample(real_image, t, torch.randn_like(real_image)).cpu()
             axs[int(img_index)].imshow(reverse_transforms_image(img), cmap = style )
             axs[int(img_index)].set_title(f't={idx}')
+            axs[int(img_index)].axis('off')
             
             if hist:
                 density = stats.gaussian_kde(img.flatten(), bw_method='scott')
@@ -368,9 +372,9 @@ class GaussianDiffusion(nn.Module):
             return x_start, x_prec, x_prec + sigma * noise
 
     @torch.inference_mode()
-    def sample_plot_image(self, epoch=-1, desired_class = None, custom_entry = None, num_images=10):
+    def sample_plot_image(self, epoch=-1, desired_class = None, custom_entry = None, num_images=10, save = False):
         """
-        Calls the model to do the backward process from a random image. There is the possibility to select a random class, otherwise it is selected randomly.
+        Calls the model to do the backward process from a noisy image. There is the possibility to select a random class, otherwise it is selected randomly.
         Returns 'num_images' images from the initial random image to the denoised one.
         """
         assert custom_entry is not None or ( desired_class in range(self.model.num_classes)) or desired_class == None, 'Class does not exist'
@@ -407,27 +411,97 @@ class GaussianDiffusion(nn.Module):
         fig2.suptitle('Reconstruction of final image from time step t')
         axs1[num_images].imshow(reverse_transforms_image(img.squeeze(0)), cmap = style )
         axs1[num_images].set_title('Starting image')
+        axs1[num_images].axis('off')
         axs2[num_images].imshow(reverse_transforms_image(img.squeeze(0)), cmap = style)
         axs2[num_images].set_title('Starting image')
-
+        axs2[num_images].axis('off')
         
         for i in range(0,self.sampling_timesteps)[::-1]:
             t = torch.full((1,), times[i], device=self.device, dtype=torch.long)
             prev_t = torch.full((1,), times[i-1] if i>0 else 0, device=self.device, dtype=torch.long)
             img_start, img_without_noise, img = self.sample_timestep(img, t, c, prev_t)
             # This is to maintain the natural range of the distribution
-            img = torch.clamp(img, -1.0, 1.0)
+            # Calculate dynamic thresholds using percentiles (like 99.5th and 0.5th)
+            max_val = torch.quantile(img, 0.995)  # Upper dynamic threshold (99.5th percentile)
+            min_val = torch.quantile(img, 0.005)  # Lower dynamic threshold (0.5th percentile)
+            # Clip predicted image values within the dynamic range
+            img = torch.clamp(img, min_val, max_val)
+            #img = torch.clamp(img, -1.0, 1.0)
             img_start = torch.clamp(img_start, -1.0, 1.0)
             # plot the image every 'stepsize' steps
             if i % stepsize == 0:
                 axs1[int(times[i]/stepsize)].imshow(reverse_transforms_image(img.squeeze(0)), cmap = style)
                 axs1[int(times[i]/stepsize)].set_title(f't={i}')
+                axs1[int(times[i]/stepsize)].axis('off')
                 axs2[int(times[i]/stepsize)].imshow(reverse_transforms_image(img_start.squeeze(0)), cmap = style)
                 axs2[int(times[i]/stepsize)].set_title(f't={i}')
+                axs2[int(times[i]/stepsize)].axis('off')
 
             
-        plt.subplots_adjust( hspace=0.5)
-        plt.savefig('images/img_{}'.format(epoch))
+        fig1.subplots_adjust(hspace=0.5, wspace=0)
+        fig2.subplots_adjust(hspace=0.5, wspace=0)
+        if save == True:
+            plt.savefig('images/img_{}'.format(epoch))
         plt.show()
 
+        return img
 
+    @torch.inference_mode()
+    def sample_plot_image_grid(self, desired_class=[None], custom_entry=None, grid_size=3, save = False):
+        """
+        Generates a 3x3 grid of unique denoised images by calling the 'sample_plot_image' function 9 times.
+        """
+        if desired_class == None:
+            desired_class = [None] * (grid_size**2)
+        if custom_entry == None:
+            custom_entry = [None] * (grid_size**2)
+        
+        # Sample noise
+        T = self.num_timesteps
+        
+        # sampling timestep, for DDIM we could have a number smaller than T
+        times = torch.linspace(0,T-1, self.sampling_timesteps)
+        times = times.int().tolist()
+        
+        fig, axs = plt.subplots(grid_size, grid_size, figsize=(10, 10))
+        fig.suptitle('Generated Images')
+    
+        # Loop to generate each image in the grid
+        for row in range(grid_size):
+            for col in range(grid_size):               
+                img = torch.randn((1, self.model.in_channels, self.image_size, self.image_size), device=self.device)
+                self.model.eval()
+                if custom_entry[row*grid_size + col] is not None:
+                    c = custom_entry[row*grid_size + col]
+                else:
+                    # selects the desired class or take a random one
+                    if desired_class[row*grid_size + col] == None:
+                        desired_class[row*grid_size + col] = torch.randint(0,self.model.num_classes,(1,), device = self.device)
+                    else:
+                        assert desired_class[row*grid_size + col] in range(self.model.num_classes), 'Class does not exist'
+                        desired_class[row*grid_size + col] = torch.tensor(desired_class[row*grid_size + col], device = self.device)
+                    c = torch.nn.functional.one_hot(desired_class[row*grid_size + col], num_classes=self.model.num_classes).float()
+                
+                # Generate a unique image
+                for i in range(0,self.sampling_timesteps)[::-1]:
+                    t = torch.full((1,), times[i], device=self.device, dtype=torch.long)
+                    prev_t = torch.full((1,), times[i-1] if i>0 else 0, device=self.device, dtype=torch.long)
+                    img_start, img_without_noise, img = self.sample_timestep(img, t, c, prev_t)
+                    # This is to maintain the natural range of the distribution
+                    # Calculate dynamic thresholds using percentiles (like 99.5th and 0.5th)
+                    max_val = torch.quantile(img, 0.995)  # Upper dynamic threshold (99.5th percentile)
+                    min_val = torch.quantile(img, 0.005)  # Lower dynamic threshold (0.5th percentile)
+                    # Clip predicted image values within the dynamic range
+                    img = torch.clamp(img, min_val, max_val)
+                    img = torch.clamp(img, -1.0, 1.0)
+                    img_start = torch.clamp(img_start, -1.0, 1.0)
+                
+                # Display the generated image in the grid
+                axs[row, col].imshow(reverse_transforms_image(img.squeeze(0)), cmap='gist_gray' if self.model.in_channels == 1 else None)
+                axs[row, col].axis('off')
+        
+        # Adjust layout and save/show image
+        fig.subplots_adjust(hspace=0, wspace=0)
+        if save == True:
+            plt.savefig('images/img_generated')
+        plt.show()
